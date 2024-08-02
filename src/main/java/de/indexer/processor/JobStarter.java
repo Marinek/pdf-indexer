@@ -7,8 +7,6 @@ import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import jakarta.annotation.PostConstruct;
-
 @Component
 public class JobStarter {
 
@@ -18,9 +16,10 @@ public class JobStarter {
     @Autowired
     private Job processDirectoryJob;
 
-    @PostConstruct
     public void startJob() {
         try {
+
+
              JobParameters params = new JobParametersBuilder()
             .addString("runScenario", String.valueOf(System.currentTimeMillis()))
             .toJobParameters();

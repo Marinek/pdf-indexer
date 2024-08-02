@@ -4,7 +4,6 @@ import java.nio.file.Path;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import ch.qos.logback.core.util.StringUtil;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -17,7 +16,7 @@ public class PdfFile {
     private Path path;
 
     @JsonIgnore
-    private String content;
+    private String content = "";
 
     private String hash;
 
@@ -27,7 +26,7 @@ public class PdfFile {
 
     @Override
     public String toString() {
-        return path + "- " + hash + ": " + content != null ? content.substring(0, Math.min(50, content.length())) : "<no content>" ;
+        return path.getFileName() + " -> " + hash + ": " + content != null ? content.substring(0, Math.min(50, content.length())) : "<no content>" ;
     }
 
 }

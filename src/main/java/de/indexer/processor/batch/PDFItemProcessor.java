@@ -1,16 +1,16 @@
 package de.indexer.processor.batch;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-import org.apache.pdfbox.Loader;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.tika.Tika;
+import org.apache.tika.exception.TikaException;
 import org.springframework.batch.item.ItemProcessor;
 
 import de.indexer.dto.PdfFile;
@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class PDFItemProcessor implements ItemProcessor<Path, PdfFile> {
+
     @Override
     public PdfFile process(Path item) {
         PdfFile pdfFile = new PdfFile(item);
@@ -26,21 +27,26 @@ public class PDFItemProcessor implements ItemProcessor<Path, PdfFile> {
             String mimeType = detectMimeType(item.toFile());
             if (!mimeType.equals("application/pdf")) {
                 log.debug("Skipping file, because it is not a pdf. ({})", item);
-                return null;
             }
-            
+
             pdfFile.setHash(calculateFileHash(item));
-            
-            if(hasIndexedFile(item)) {
+
+            if (hasIndexedFile(item)) {
                 log.debug("Skipping file, it has already been indexed. ({})", item);
                 return null;
             }
 
             pdfFile.setContent(getText(item));
 
-            log.info("Result: {}" + pdfFile);
+            if (pdfFile.getContent().isEmpty()) {
+                return null;
+            }
+
+            log.info("Result: {}", pdfFile);
         } catch (IOException | NoSuchAlgorithmException e) {
             log.error("Error creating pdffile represantion {}", item, e);
+
+            return null;
         }
 
         return pdfFile;
@@ -73,9 +79,20 @@ public class PDFItemProcessor implements ItemProcessor<Path, PdfFile> {
         return hexString.toString();
     }
 
-    private static String getText(Path pdfFile) throws IOException {
-        PDDocument doc = Loader.loadPDF(pdfFile.toFile());
-        return new PDFTextStripper().getText(doc);
+    private String getText(Path pdfFile) throws IOException {
+        try (InputStream stream = new FileInputStream(pdfFile.toFile())) {
+            Tika tika = new Tika();
+            String extract = null;
+
+            extract = tika.parseToString(stream);
+            log.info("Extracting Text from {} : ({}) '{}'", pdfFile.getFileName(), tika.detect(pdfFile), extract);
+
+            return extract;
+        } catch (TikaException e) {
+            log.error("Error extracting Text from {}", pdfFile, e);
+        }
+
+        return "";
     }
 
     public static boolean hasIndexedFile(Path originalFilePath) {
@@ -84,7 +101,6 @@ public class PDFItemProcessor implements ItemProcessor<Path, PdfFile> {
             return false;
         }
 
-        // Construct the path of the file with ".indexed" postfix
         String indexedFileName = originalFilePath.getFileName().toString() + ".indexed";
         Path indexedFilePath = directory.resolve(indexedFileName);
 
