@@ -1,4 +1,4 @@
-package de.indexer.processor.batch;
+package de.indexer.processor.index;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -11,6 +11,7 @@ import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.IndexWriter;
 import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
+import org.springframework.lang.NonNull;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -28,7 +29,7 @@ public class PDFItemWriter implements ItemWriter<PdfFile> {
     }
 
     @Override
-    public void write(Chunk<? extends PdfFile> chunk) throws Exception {
+    public void write(@NonNull Chunk<? extends PdfFile> chunk) throws Exception {
         for (PdfFile file : chunk) {
             addDocumentToIndex(file);
             createMetaFile(file);

@@ -1,6 +1,5 @@
-package de.indexer.processor.batch;
+package de.indexer.processor.index;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,23 +11,21 @@ import java.security.NoSuchAlgorithmException;
 import org.apache.tika.Tika;
 import org.apache.tika.exception.TikaException;
 import org.springframework.batch.item.ItemProcessor;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 
 import de.indexer.dto.PdfFile;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class PDFItemProcessor implements ItemProcessor<Path, PdfFile> {
+public class PDFItemIndexer implements ItemProcessor<Path, PdfFile> {
 
     @Override
-    public PdfFile process(Path item) {
+    @Nullable
+    public PdfFile process(@NonNull Path item) throws Exception {
         PdfFile pdfFile = new PdfFile(item);
 
         try {
-            String mimeType = detectMimeType(item.toFile());
-            if (!mimeType.equals("application/pdf")) {
-                log.debug("Skipping file, because it is not a pdf. ({})", item);
-            }
-
             pdfFile.setHash(calculateFileHash(item));
 
             if (hasIndexedFile(item)) {
@@ -52,12 +49,7 @@ public class PDFItemProcessor implements ItemProcessor<Path, PdfFile> {
         return pdfFile;
     }
 
-    private static String detectMimeType(File file) throws IOException {
-        Tika tika = new Tika();
-        return tika.detect(file);
-    }
-
-    private String calculateFileHash(Path file) throws IOException, NoSuchAlgorithmException {
+     private String calculateFileHash(Path file) throws IOException, NoSuchAlgorithmException {
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
         try (var fis = Files.newInputStream(file)) {
             byte[] buffer = new byte[1024];

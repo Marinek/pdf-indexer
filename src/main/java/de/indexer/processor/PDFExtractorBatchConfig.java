@@ -25,9 +25,8 @@ import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import de.indexer.dto.PdfFile;
-import de.indexer.processor.batch.PDFItemProcessor;
-import de.indexer.processor.batch.PDFItemReader;
-import de.indexer.processor.batch.PDFItemWriter;
+import de.indexer.processor.index.PDFItemIndexer;
+import de.indexer.processor.index.PDFItemWriter;
 
 @Configuration
 public class PDFExtractorBatchConfig {
@@ -83,7 +82,7 @@ public class PDFExtractorBatchConfig {
 
     @Bean
     public ItemProcessor<Path, PdfFile> directoryItemProcessor() {
-        return new PDFItemProcessor();
+        return new PDFItemIndexer();
     }
 
     @Bean
